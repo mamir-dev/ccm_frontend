@@ -48,8 +48,8 @@ const TimeStatusWidget = () => {
 
   return (
     <>
-      <div className="flex items-center bg-primary-600 text-white rounded-full px-4 py-1.5 shadow-md border border-primary-500 animate-pulse-slow">
-        <div className="flex items-center gap-2 mr-3 border-r border-primary-400 pr-3">
+      <div className="flex items-center text-white rounded-full px-4 py-1.5 shadow-md border border-white/20" style={{backgroundColor: '#1E2A3A'}}>
+        <div className="flex items-center gap-2 mr-3 border-r border-white/20 pr-3">
           <Clock className="w-4 h-4" />
           <span className="text-sm font-bold font-mono">{formatTime(elapsedSeconds)}</span>
         </div>
@@ -59,7 +59,7 @@ const TimeStatusWidget = () => {
           </span>
           <button 
             onClick={handleStopClick}
-            className="p-1 hover:bg-primary-700 rounded-full transition-colors flex items-center justify-center bg-white/20"
+            className="p-1 hover:bg-white/20 rounded-full transition-colors flex items-center justify-center bg-white/10"
             title="Stop Timer"
           >
             <Square className="w-3 h-3 fill-current" />
@@ -70,12 +70,12 @@ const TimeStatusWidget = () => {
       {isStopping && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4 text-gray-900">
           <div className="bg-white rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="bg-primary-600 p-4 text-white">
+            <div className="p-4 text-white" style={{backgroundColor: '#1E2A3A'}}>
               <h3 className="font-bold flex items-center gap-2">
                 <Clock className="w-5 h-5" />
                 Finalize CCM Activity
               </h3>
-              <p className="text-primary-100 text-sm mt-1">
+              <p className="text-white/70 text-sm mt-1">
                 You tracked {Math.ceil(elapsedSeconds / 60)} minute(s) for {activeTimer.patientName}
               </p>
             </div>
@@ -112,7 +112,8 @@ const TimeStatusWidget = () => {
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 btn-primary py-2 shadow-lg shadow-primary-200"
+                  className="flex-1 py-2 text-white font-medium rounded-lg shadow-sm transition"
+                  style={{backgroundColor: '#1E2A3A'}}
                 >
                   Save Activity
                 </button>

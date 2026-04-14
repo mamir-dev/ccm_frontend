@@ -45,11 +45,11 @@ export default function EnrolledPatients() {
   
   const getBillingStatusBadge = (minutes) => {
     if (minutes >= 20) {
-      return <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Eligible</span>;
+      return <span className="px-2 py-1 bg-gray-700 text-white text-xs rounded-full font-medium">Eligible</span>;
     } else if (minutes > 0) {
-      return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Below Threshold</span>;
+      return <span className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded-full">Below Threshold</span>;
     }
-    return <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">No Time</span>;
+    return <span className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-full">No Time</span>;
   };
   
   return (
@@ -69,19 +69,19 @@ export default function EnrolledPatients() {
           </div>
           <div className="bg-white rounded-lg border p-4">
             <p className="text-sm text-gray-500">Eligible for Billing</p>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-gray-800">
               {data.patients?.filter(p => p.minutes_completed_this_month >= 20).length || 0}
             </p>
           </div>
           <div className="bg-white rounded-lg border p-4">
             <p className="text-sm text-gray-500">Total Minutes (This Month)</p>
-            <p className="text-2xl font-bold text-primary-600">
+            <p className="text-2xl font-bold text-gray-800">
               {data.patients?.reduce((sum, p) => sum + (p.minutes_completed_this_month || 0), 0) || 0}
             </p>
           </div>
           <div className="bg-white rounded-lg border p-4">
             <p className="text-sm text-gray-500">Pending Claims</p>
-            <p className="text-2xl font-bold text-orange-600">
+            <p className="text-2xl font-bold text-gray-800">
               {data.patients?.reduce((sum, p) => sum + (p.pending_claims || 0), 0) || 0}
             </p>
           </div>
@@ -139,9 +139,7 @@ export default function EnrolledPatients() {
                       </Link>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        patient.program_type === 'CCM' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                      }`}>
+                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 font-medium">
                         {patient.program_type}
                       </span>
                     </td>
@@ -154,7 +152,7 @@ export default function EnrolledPatients() {
                     <td className="px-6 py-4">
                       <Link
                         to={`/care-plan/${patient.id}`}
-                        className="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1"
+                        className="text-gray-600 hover:text-gray-900 text-sm flex items-center gap-1"
                       >
                         <FileText className="w-4 h-4" />
                         View Plan
@@ -165,7 +163,7 @@ export default function EnrolledPatients() {
                         {activeTimers[patient.id] ? (
                           <button
                             onClick={() => stopTimer(patient.id)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            className="p-1 text-gray-500 hover:bg-gray-100 rounded"
                             title="Stop Timer"
                           >
                             <StopCircle className="w-5 h-5" />
@@ -173,7 +171,7 @@ export default function EnrolledPatients() {
                         ) : (
                           <button
                             onClick={() => startTimer(patient.id)}
-                            className="p-1 text-green-600 hover:bg-green-50 rounded"
+                            className="p-1 text-gray-500 hover:bg-gray-100 rounded"
                             title="Start Timer"
                           >
                             <Play className="w-5 h-5" />

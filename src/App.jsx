@@ -15,6 +15,8 @@ import AddPatient from './pages/AddPatient';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
 import DisenrollPatient from './pages/DisenrollPatient';
+import PatientHub from './pages/PatientHub';
+
 
 const queryClient = new QueryClient();
 
@@ -35,7 +37,9 @@ function App() {
               <Route path="/enrollment-queue" element={<EnrollmentQueue />} />
               <Route path="/add-patient" element={<AddPatient />} />
               <Route path="/enrolled-patients" element={<EnrolledPatients />} />
-              <Route path="/patient/:id" element={<PatientDetail />} />
+              <Route path="/patient/:id" element={<PatientHub />} />
+              <Route path="/patient-hub/:id" element={<PatientHub />} />
+
               <Route path="/care-plan/:patientId?" element={<CarePlan />} />
               <Route path="/enrollment/disenroll/:enrollmentId" element={<DisenrollPatient />} />
               <Route path="/billing" element={<Billing />} />

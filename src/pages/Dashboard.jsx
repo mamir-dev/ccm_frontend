@@ -31,28 +31,24 @@ export default function Dashboard() {
       title: 'Eligible Patients',
       value: kpis?.eligible_count || 0,
       icon: Users,
-      color: 'bg-blue-500',
       link: '/enrollment-queue'
     },
     {
       title: 'Enrolled Patients',
       value: kpis?.enrolled_count || 0,
       icon: UserCheck,
-      color: 'bg-green-500',
       link: '/enrolled-patients'
     },
     {
       title: 'Minutes This Month',
       value: kpis?.total_minutes || 0,
       icon: Clock,
-      color: 'bg-purple-500',
       link: '/reports'
     },
     {
       title: 'Claims Pending',
       value: kpis?.pending_claims || 0,
       icon: DollarSign,
-      color: 'bg-orange-500',
       link: '/billing'
     },
   ];
@@ -80,7 +76,7 @@ export default function Dashboard() {
                   <p className="text-sm text-gray-500">{stat.title}</p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                 </div>
-                <div className={`${stat.color} p-3 rounded-lg`}>
+                <div className="p-3 rounded-lg" style={{backgroundColor: '#1E2A3A'}}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -103,15 +99,22 @@ export default function Dashboard() {
           </div>
           <div className="divide-y">
             {kpis?.recent_enrollments?.map((enrollment) => (
-              <div key={enrollment.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+              <Link 
+                key={enrollment.id} 
+                to={`/patient/${enrollment.patient_id || enrollment.id}`}
+                className="p-4 flex items-center justify-between hover:bg-gray-50 transition"
+              >
                 <div>
-                  <p className="font-medium text-gray-900">{enrollment.patient_name}</p>
+                  <p className="font-medium text-gray-900 group-hover:text-primary-600">{enrollment.patient_name}</p>
                   <p className="text-sm text-gray-500">Enrolled in {enrollment.program_type}</p>
                 </div>
-                <span className="text-sm text-gray-400">
-                  {new Date(enrollment.enrolled_at).toLocaleDateString()}
-                </span>
-              </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-400">
+                    {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                  </p>
+                  <ChevronRight className="w-4 h-4 text-gray-300 ml-auto mt-1" />
+                </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -128,15 +131,15 @@ export default function Dashboard() {
           </div>
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3 bg-green-50 rounded-xl border border-green-100">
-                <p className="text-xl font-black text-green-700">{billingSummary?.eligible_for_billing || 0}</p>
-                <p className="text-[10px] font-bold text-green-600 uppercase mt-1">Ready to Bill</p>
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                <p className="text-xl font-black text-gray-700">{billingSummary?.eligible_for_billing || 0}</p>
+                <p className="text-[10px] font-bold text-gray-600 uppercase mt-1">Ready to Bill</p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <p className="text-xl font-black text-blue-700">
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                <p className="text-xl font-black text-gray-700">
                   {billingSummary?.patients?.filter(p => p.total_minutes > 0 && p.total_minutes < 20).length || 0}
                 </p>
-                <p className="text-[10px] font-bold text-blue-600 uppercase mt-1">In Progress</p>
+                <p className="text-[10px] font-bold text-gray-500 uppercase mt-1">In Progress</p>
               </div>
               <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <p className="text-xl font-black text-gray-700">

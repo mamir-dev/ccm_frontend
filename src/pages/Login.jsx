@@ -28,11 +28,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-blue-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-8">
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-primary-100 p-3 rounded-full">
-            <Activity className="w-8 h-8 text-primary-600" />
+          <div className="p-3 rounded-full" style={{backgroundColor: '#1E2A3A'}}>
+            <Activity className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mt-4">CCM System</h1>
           <p className="text-gray-500 text-sm mt-1">Chronic Care Management Platform</p>
@@ -66,7 +66,8 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full btn-primary py-2.5 disabled:opacity-50"
+            className="w-full py-2.5 text-white rounded-lg font-medium transition disabled:opacity-50"
+            style={{backgroundColor: '#1E2A3A'}}
           >
             {loading ? 'Logging in...' : 'Sign In'}
           </button>

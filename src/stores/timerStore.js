@@ -12,6 +12,8 @@ export const useTimerStore = create((set, get) => ({
       const response = await api.post('/time/start', { patientId });
       const startTime = new Date(response.data.started_at);
       
+      const initialElapsed = Math.floor((new Date() - startTime) / 1000);
+      
       const interval = setInterval(() => {
         set((state) => ({ 
           elapsedSeconds: Math.floor((new Date() - startTime) / 1000) 
@@ -21,7 +23,7 @@ export const useTimerStore = create((set, get) => ({
       set({ 
         activeTimer: { patientId, patientName, startTime },
         isRunning: true,
-        elapsedSeconds: 0,
+        elapsedSeconds: initialElapsed > 0 ? initialElapsed : 0,
         tickInterval: interval
       });
     } catch (error) {

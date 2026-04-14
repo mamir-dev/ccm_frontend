@@ -1,11 +1,11 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  UserPlus, 
-  FileText, 
-  DollarSign, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Users,
+  UserPlus,
+  FileText,
+  DollarSign,
+  BarChart3,
   Settings,
   LogOut,
   Menu,
@@ -46,7 +46,7 @@ export default function Layout() {
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
         <div className="relative flex flex-col w-64 max-w-xs bg-white h-full">
           <div className="flex items-center justify-between p-4 border-b">
-            <h1 className="text-xl font-bold text-primary-600">CCM System</h1>
+            <h1 className="text-xl font-bold" style={{color: '#1E2A3A'}}>CCM System</h1>
             <button onClick={() => setSidebarOpen(false)} className="p-1">
               <X className="w-6 h-6" />
             </button>
@@ -60,9 +60,10 @@ export default function Layout() {
                   to={item.href}
                   className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-50 text-primary-700'
+                      ? 'text-white font-semibold'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
+                  style={isActive ? {backgroundColor: '#1E2A3A'} : {}}
                   onClick={() => setSidebarOpen(false)}
                 >
                   <item.icon className="w-5 h-5 mr-3" />
@@ -76,9 +77,9 @@ export default function Layout() {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-1 bg-white border-r">
-          <div className="flex items-center justify-center h-16 border-b">
-            <h1 className="text-xl font-bold text-primary-600">CCM System</h1>
+        <div className="flex flex-col flex-1 border-r" style={{backgroundColor: '#1E2A3A'}}>
+          <div className="flex items-center justify-center h-16 border-b border-white/10">
+            <h1 className="text-xl font-bold text-white">CCM System</h1>
           </div>
           <nav className="flex-1 p-4 space-y-1">
             {navigation.map((item) => {
@@ -89,8 +90,8 @@ export default function Layout() {
                   to={item.href}
                   className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-white/10 text-white font-semibold'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   <item.icon className="w-5 h-5 mr-3" />
@@ -99,13 +100,13 @@ export default function Layout() {
               );
             })}
           </nav>
-          <div className="p-4 border-t">
+          <div className="p-4 border-t border-white/10">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-700">{user?.firstName} {user?.lastName}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                <p className="text-sm font-medium text-white">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-white/60 capitalize">{user?.role}</p>
               </div>
-              <button onClick={handleLogout} className="p-2 text-gray-500 hover:text-gray-700">
+              <button onClick={handleLogout} className="p-2 text-white/60 hover:text-white">
                 <LogOut className="w-5 h-5" />
               </button>
             </div>
@@ -117,7 +118,7 @@ export default function Layout() {
       <div className="lg:pl-64">
         <div className="sticky top-0 z-10 bg-white border-b lg:hidden">
           <div className="flex items-center justify-between p-4">
-            <h1 className="text-xl font-bold text-primary-600">CCM System</h1>
+            <h1 className="text-xl font-bold" style={{color: '#1E2A3A'}}>CCM System</h1>
             <div className="flex items-center gap-4">
               <TimeStatusWidget />
               <button onClick={() => setSidebarOpen(true)} className="p-1">
@@ -128,7 +129,7 @@ export default function Layout() {
         </div>
         <main className="p-6">
           <div className="hidden lg:flex items-center justify-end mb-6 -mt-2 gap-4">
-             <TimeStatusWidget />
+            <TimeStatusWidget />
           </div>
           <Outlet />
         </main>

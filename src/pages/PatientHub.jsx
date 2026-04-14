@@ -3,8 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import {
     User, Calendar, Phone, Mail, MapPin, Activity, Clock,
-    FileText, DollarSign, Users, MessageCircle, Edit,
-    Plus, Trash2, Play, StopCircle, History, Download
+    FileText, Users, MessageCircle, Edit,
+    Plus, Trash2, Play, StopCircle, History, Download,
+    Search, Info, Printer, Settings,
+    Microscope, Image, Stethoscope, PhoneCall, Globe,
+    Share2, Package, Layout, List, ChevronRight, X, ArrowRight,
+    Heart, ClipboardList, AlertCircle, CheckCircle, Timer, MoreVertical
 } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
@@ -19,6 +23,8 @@ export default function PatientHub() {
     const [showTimeModal, setShowTimeModal] = useState(false);
     const [showProblemModal, setShowProblemModal] = useState(false);
     const [activeTimer, setActiveTimer] = useState(false);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [timerInterval, setTimerInterval] = useState(null);
 
     // Fetch patient data
     const { data: patient, isLoading, refetch } = useQuery(['patient', id], async () => {
@@ -53,6 +59,10 @@ export default function PatientHub() {
         {
             onSuccess: () => {
                 setActiveTimer(true);
+                const interval = setInterval(() => {
+                    setElapsedTime(prev => prev + 1);
+                }, 1000);
+                setTimerInterval(interval);
                 toast.success('Timer started');
             },
             onError: () => toast.error('Failed to start timer')
@@ -62,13 +72,15 @@ export default function PatientHub() {
     // Stop timer mutation
     const stopTimerMutation = useMutation(
         async () => {
-            const response = await api.post('/time/stop', { patientId: id });
+            const response = await api.post('/time/stop', { patientId: id, seconds: elapsedTime });
             return response.data;
         },
         {
             onSuccess: (data) => {
+                if (timerInterval) clearInterval(timerInterval);
                 setActiveTimer(false);
-                toast.success(`${data.minutes} minutes recorded`);
+                setElapsedTime(0);
+                toast.success(`${Math.round(data.minutes)} minutes recorded`);
                 refetch();
                 queryClient.invalidateQueries(['time-logs', id]);
             },
@@ -76,423 +88,389 @@ export default function PatientHub() {
         }
     );
 
+    const formatElapsedTime = (seconds) => {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
     if (isLoading) {
-        return <div className="text-center py-8">Loading patient data...</div>;
+        return (
+            <div className="min-h-screen  flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading patient data...</p>
+                </div>
+            </div>
+        );
     }
 
     if (!patient) {
-        return <div className="text-center py-8 text-red-600">Patient not found</div>;
+        return (
+            <div className="min-h-screen  flex items-center justify-center">
+                <div className="text-center text-red-600">
+                    <AlertCircle className="w-16 h-16 mx-auto mb-4" />
+                    <p className="text-lg font-semibold">Patient not found</p>
+                </div>
+            </div>
+        );
     }
 
     const currentEnrollment = patient.current_enrollment;
     const isEnrolled = currentEnrollment?.status === 'enrolled';
+    const totalMinutes = timeLogs?.summary?.total_minutes || 0;
 
     return (
-        <div className="space-y-6">
-            {/* Patient Header Card */}
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-                <div className="bg-gradient-to-r from-primary-600 to-primary-800 px-6 py-4">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <h1 className="text-2xl font-bold text-white">
-                                {patient.first_name} {patient.last_name}
-                            </h1>
-                            <p className="text-primary-100 mt-1">
-                                ID: {patient.account_number} • DOB: {new Date(patient.date_of_birth).toLocaleDateString()} • Age: {patient.age}
-                            </p>
-                        </div>
-                        <div className="flex gap-2">
+        <div className="min-h-screen ">
+            {/* Modern Header */}
+            <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-20">
+                <div className="max-w-7xl mx-auto px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
                             <button
-                                onClick={() => navigate(`/care-plan/${id}`)}
-                                className="px-3 py-1 bg-white/20 text-white rounded-lg hover:bg-white/30"
+                                onClick={() => navigate(-1)}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             >
-                                <FileText className="w-4 h-4 inline mr-1" />
-                                Care Plan
+                                <X className="w-5 h-5 text-gray-500" />
                             </button>
-                            <button
-                                onClick={() => setShowTimeModal(true)}
-                                className="px-3 py-1 bg-white/20 text-white rounded-lg hover:bg-white/30"
-                            >
-                                <Clock className="w-4 h-4 inline mr-1" />
-                                Add Time
+                            <div className="h-8 w-px bg-gray-200"></div>
+                            <div className="flex items-center space-x-3">
+                                <div className="w-12 h-12 bg-gray-600 rounded-xl flex items-center justify-center shadow-lg">
+                                    <User className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-xl font-bold text-gray-800">
+                                        {patient.last_name}, {patient.first_name}
+                                    </h1>
+                                    <div className="flex items-center space-x-3 text-sm text-gray-500 mt-0.5">
+                                        <span className="flex items-center">
+                                            <Calendar className="w-3.5 h-3.5 mr-1" />
+                                            {new Date(patient.date_of_birth).toLocaleDateString()} ({patient.age} years)
+                                        </span>
+                                        <span>•</span>
+                                        <span>ID: {patient.account_number}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <button className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium">
+                                <Settings className="w-4 h-4 inline mr-2" />
+                                Settings
                             </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Contact Info */}
-                    <div className="flex items-start gap-3">
-                        <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
-                        <div>
-                            <p className="text-sm text-gray-500">Contact</p>
-                            <p className="font-medium">{patient.phone_mobile || 'No phone'}</p>
-                            <p className="text-sm text-gray-600">{patient.email || 'No email'}</p>
-                        </div>
-                    </div>
-
-                    {/* Address */}
-                    <div className="flex items-start gap-3">
-                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                        <div>
-                            <p className="text-sm text-gray-500">Address</p>
-                            <p className="font-medium">
-                                {patient.address_line1} {patient.address_line2}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                                {patient.city}, {patient.state} {patient.zip_code}
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Providers */}
-                    <div className="flex items-start gap-3">
-                        <Users className="w-5 h-5 text-gray-400 mt-0.5" />
-                        <div>
-                            <p className="text-sm text-gray-500">Providers</p>
-                            <p className="font-medium">PCP: {patient.pcp_name || 'Not assigned'}</p>
-                            <p className="text-sm text-gray-600">Rendering: {patient.rendering_provider_name || 'Not assigned'}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Enrollment Status Banner */}
-            {isEnrolled ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex justify-between items-center">
-                    <div>
-                        <p className="text-green-800 font-medium">✓ Enrolled in {currentEnrollment.program_type} Program</p>
-                        <p className="text-green-700 text-sm">
-                            Started: {new Date(currentEnrollment.start_date).toLocaleDateString()} •
-                            Consent: {currentEnrollment.consent_type} on {new Date(currentEnrollment.consent_date).toLocaleDateString()}
-                        </p>
+            <div className="max-w-7xl mx-auto px-6 py-6">
+                {/* Quick Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">Total CCM Time</p>
+                                <p className="text-2xl font-bold text-gray-800 mt-1">{Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m</p>
+                            </div>
+                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <Clock className="w-5 h-5 text-gray-500" />
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex gap-2">
-                        {activeTimer ? (
-                            <button
-                                onClick={() => stopTimerMutation.mutate()}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                                <StopCircle className="w-4 h-4" />
-                                Stop Timer
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => startTimerMutation.mutate()}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                                <Play className="w-4 h-4" />
-                                Start Timer
-                            </button>
-                        )}
-                        <button
-                            onClick={() => navigate(`/enrollment/disenroll/${currentEnrollment.id}`)}
-                            className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50"
-                        >
-                            Disenroll
-                        </button>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">Active Problems</p>
+                                <p className="text-2xl font-bold text-gray-800 mt-1">{patient.problems?.filter(p => p.clinical_status === 'active').length || 0}</p>
+                            </div>
+                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <Heart className="w-5 h-5 text-gray-500" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">Enrollment Status</p>
+                                <p className={`text-lg font-bold mt-1 ${isEnrolled ? 'text-gray-700' : 'text-gray-400'}`}>
+                                    {isEnrolled ? 'Active' : 'Not Enrolled'}
+                                </p>
+                            </div>
+                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <Users className="w-5 h-5 text-gray-500" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">Care Plan</p>
+                                <p className="text-lg font-bold mt-1 text-gray-700">In Progress</p>
+                            </div>
+                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                <ClipboardList className="w-5 h-5 text-gray-500" />
+                            </div>
+                        </div>
                     </div>
                 </div>
-            ) : (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <p className="text-yellow-800">Not enrolled in CCM/PCM program</p>
-                    <button
-                        onClick={() => navigate(`/enrollment-queue`)}
-                        className="mt-2 text-yellow-700 underline text-sm"
-                    >
-                        Enroll this patient →
-                    </button>
-                </div>
-            )}
 
-            {/* Tab Navigation */}
-            <div className="flex gap-1 border-b">
-                {[
-                    { id: 'overview', label: 'Overview', icon: User },
-                    { id: 'problems', label: 'Problems', icon: Activity },
-                    { id: 'time', label: 'Time Tracking', icon: Clock },
-                    { id: 'history', label: 'Enrollment History', icon: History },
-                    { id: 'care-team', label: 'Care Team', icon: Users }
-                ].map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-5 py-3 text-sm font-medium transition-colors ${activeTab === tab.id
-                                ? 'text-primary-600 border-b-2 border-primary-600'
-                                : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                    >
-                        <tab.icon className="w-4 h-4" />
-                        {tab.label}
-                    </button>
-                ))}
-            </div>
-
-            {/* Overview Tab */}
-            {activeTab === 'overview' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Chronic Conditions */}
-                    <div className="card p-5">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-semibold text-gray-900">Chronic Conditions</h3>
-                            <button
-                                onClick={() => setShowProblemModal(true)}
-                                className="text-primary-600 text-sm flex items-center gap-1"
-                            >
-                                <Plus className="w-4 h-4" />
-                                Add Problem
-                            </button>
-                        </div>
-                        <div className="space-y-3">
-                            {patient.problems?.filter(p => p.clinical_status === 'active').map((problem) => (
-                                <div key={problem.id} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
+                {/* Main Grid */}
+                <div className="grid grid-cols-12 gap-6">
+                    {/* Left Column - Patient Info & CCM Core */}
+                    <div className="col-span-12 lg:col-span-5 space-y-6">
+                        {/* Patient Information Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                                <h2 className="text-sm font-semibold text-gray-800 flex items-center">
+                                    <User className="w-4 h-4 mr-2 text-gray-400" />
+                                    Patient Information
+                                </h2>
+                            </div>
+                            <div className="p-5 space-y-3">
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <p className="font-medium">{problem.icd_code}</p>
-                                        <p className="text-sm text-gray-600">{problem.icd_description}</p>
-                                        <p className="text-xs text-gray-400 mt-1">Onset: {new Date(problem.onset_date).toLocaleDateString()}</p>
+                                        <label className="text-xs text-gray-500">Phone Number</label>
+                                        <p className="text-sm font-medium text-gray-800 mt-0.5">{patient.phone_mobile || 'Not provided'}</p>
                                     </div>
-                                    <button className="p-1 text-gray-400 hover:text-red-500">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ))}
-                            {(!patient.problems || patient.problems.filter(p => p.clinical_status === 'active').length === 0) && (
-                                <p className="text-gray-500 text-sm text-center py-4">No chronic conditions recorded</p>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Recent Time Logs */}
-                    <div className="card p-5">
-                        <h3 className="font-semibold text-gray-900 mb-4">Recent Time Logs</h3>
-                        <div className="space-y-2 max-h-80 overflow-y-auto">
-                            {timeLogs?.logs?.slice(0, 10).map((log) => (
-                                <div key={log.id} className="flex justify-between items-center p-2 border-b">
                                     <div>
-                                        <p className="font-medium">{log.minutes} minutes</p>
-                                        <p className="text-xs text-gray-500">{log.reason_name || 'No reason'}</p>
+                                        <label className="text-xs text-gray-500">Email</label>
+                                        <p className="text-sm font-medium text-gray-800 mt-0.5">{patient.email || 'Not provided'}</p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm">{new Date(log.service_date).toLocaleDateString()}</p>
-                                        <p className="text-xs text-gray-400">{log.user_name}</p>
+                                    <div>
+                                        <label className="text-xs text-gray-500">Date of Birth</label>
+                                        <p className="text-sm font-medium text-gray-800 mt-0.5">{new Date(patient.date_of_birth).toLocaleDateString()}</p>
                                     </div>
-                                </div>
-                            ))}
-                            {(!timeLogs?.logs || timeLogs.logs.length === 0) && (
-                                <p className="text-gray-500 text-sm text-center py-4">No time records found</p>
-                            )}
-                        </div>
-                        {timeLogs?.summary && (
-                            <div className="mt-4 pt-3 border-t">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Total (This Month):</span>
-                                    <span className="font-medium">{timeLogs.summary.total_minutes} minutes</span>
-                                </div>
-                                <div className="flex justify-between text-sm mt-1">
-                                    <span className="text-gray-600">Professional Time:</span>
-                                    <span className="font-medium">{timeLogs.summary.professional_minutes} minutes</span>
-                                </div>
-                                <div className="flex justify-between text-sm mt-1">
-                                    <span className="text-gray-600">Staff Time:</span>
-                                    <span className="font-medium">{timeLogs.summary.staff_minutes} minutes</span>
+                                    <div>
+                                        <label className="text-xs text-gray-500">Gender</label>
+                                        <p className="text-sm font-medium text-gray-800 mt-0.5 capitalize">{patient.gender || 'Not specified'}</p>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-xs text-gray-500">Address</label>
+                                        <p className="text-sm font-medium text-gray-800 mt-0.5">{patient.city ? `${patient.city}, ${patient.state} ${patient.zip_code}` : 'Not provided'}</p>
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
-
-                    {/* Latest Care Plan */}
-                    {carePlan?.care_plan && (
-                        <div className="card p-5 lg:col-span-2">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-semibold text-gray-900">Latest Care Plan</h3>
-                                <button
-                                    onClick={() => navigate(`/care-plan/${id}`)}
-                                    className="text-primary-600 text-sm"
-                                >
-                                    Edit Care Plan →
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm text-gray-500">Visit Date</p>
-                                    <p className="font-medium">{new Date(carePlan.care_plan.visit_date).toLocaleDateString()}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Status</p>
-                                    <p className={`font-medium ${carePlan.care_plan.is_locked ? 'text-green-600' : 'text-yellow-600'}`}>
-                                        {carePlan.care_plan.is_locked ? 'Locked' : 'In Progress'}
-                                    </p>
-                                </div>
-                            </div>
-                            {carePlan.care_plan.problems?.length > 0 && (
-                                <div className="mt-4">
-                                    <p className="text-sm text-gray-500 mb-2">Problems Addressed</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {carePlan.care_plan.problems.slice(0, 3).map((p) => (
-                                            <span key={p.id} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                                {p.icd_code}
-                                            </span>
-                                        ))}
-                                        {carePlan.care_plan.problems.length > 3 && (
-                                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                                                +{carePlan.care_plan.problems.length - 3} more
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
                         </div>
-                    )}
-                </div>
-            )}
 
-            {/* Problems Tab */}
-            {activeTab === 'problems' && (
-                <div className="card">
-                    <div className="p-5 border-b flex justify-between items-center">
-                        <h3 className="font-semibold text-gray-900">Problem List</h3>
-                        <button
-                            onClick={() => setShowProblemModal(true)}
-                            className="btn-primary text-sm py-1.5"
-                        >
-                            <Plus className="w-4 h-4 inline mr-1" />
-                            Add Problem
-                        </button>
-                    </div>
-                    <div className="divide-y">
-                        {patient.problems?.map((problem) => (
-                            <div key={problem.id} className="p-4">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-medium">{problem.icd_code} - {problem.icd_description}</p>
-                                        <div className="flex gap-4 mt-1 text-sm text-gray-500">
-                                            <span>Status: {problem.clinical_status}</span>
-                                            <span>Onset: {new Date(problem.onset_date).toLocaleDateString()}</span>
+                        {/* CCM Enrollment Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                                <h2 className="text-sm font-semibold text-gray-800 flex items-center">
+                                    <Activity className="w-4 h-4 mr-2 text-gray-400" />
+                                    Chronic Care Management Enrollment
+                                </h2>
+                            </div>
+                            <div className="p-5">
+                                {isEnrolled ? (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div className="flex items-center">
+                                                <CheckCircle className="w-5 h-5 text-gray-500 mr-2" />
+                                                <span className="text-sm font-medium text-gray-700">Actively Enrolled</span>
+                                            </div>
+                                            <button className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                                                Disenroll
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-xs text-gray-500">Start Date</label>
+                                                <p className="text-sm font-medium text-gray-800 mt-0.5">
+                                                    {currentEnrollment?.start_date ? new Date(currentEnrollment.start_date).toLocaleDateString() : 'Not set'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs text-gray-500">Consent Type</label>
+                                                <p className="text-sm font-medium text-gray-800 mt-0.5 capitalize">{currentEnrollment?.consent_type || 'Verbal'}</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-500">Primary Care Provider</label>
+                                            <p className="text-sm font-medium text-gray-800 mt-0.5">{patient.pcp_name || 'Not assigned'}</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button className="text-gray-400 hover:text-blue-600">
-                                            <Edit className="w-4 h-4" />
+                                ) : (
+                                    <div className="text-center py-6">
+                                        <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                        <p className="text-gray-500 mb-3">Patient not enrolled in CCM</p>
+                                        <button className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors" style={{backgroundColor: '#1E2A3A'}}>
+                                            Enroll Patient
                                         </button>
-                                        <button className="text-gray-400 hover:text-red-600">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Time Tracking Tab */}
-            {activeTab === 'time' && (
-                <div className="card">
-                    <div className="p-5 border-b">
-                        <h3 className="font-semibold text-gray-900">Time Tracking Logs</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Date</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Minutes</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Type</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Reason</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">User</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {timeLogs?.logs?.map((log) => (
-                                    <tr key={log.id} className={log.is_voided ? 'bg-red-50 line-through text-gray-400' : ''}>
-                                        <td className="px-4 py-3 text-sm">{new Date(log.service_date).toLocaleDateString()}</td>
-                                        <td className="px-4 py-3 font-medium">{log.minutes} min</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-0.5 text-xs rounded-full ${log.is_professional_time ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                                                }`}>
-                                                {log.is_professional_time ? 'Professional' : 'Staff'}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm">{log.reason_name || '-'}</td>
-                                        <td className="px-4 py-3 text-sm">{log.user_name}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{log.notes || '-'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            {/* Enrollment History Tab */}
-            {activeTab === 'history' && (
-                <div className="card">
-                    <div className="p-5 border-b">
-                        <h3 className="font-semibold text-gray-900">Enrollment History</h3>
-                    </div>
-                    <div className="divide-y">
-                        {enrollmentHistory?.map((enrollment) => (
-                            <div key={enrollment.id} className="p-4">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="font-medium">
-                                            {enrollment.program_type} - {enrollment.status.toUpperCase()}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Enrolled: {new Date(enrollment.start_date).toLocaleDateString()}
-                                            {enrollment.end_date && ` to ${new Date(enrollment.end_date).toLocaleDateString()}`}
-                                        </p>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            Consent: {enrollment.consent_type} on {new Date(enrollment.consent_date).toLocaleDateString()}
-                                        </p>
-                                        {enrollment.disenrollment_reason && (
-                                            <p className="text-sm text-red-600 mt-1">
-                                                Disenrolled: {enrollment.disenrollment_reason}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs text-gray-400">
-                                            Enrolled by: {enrollment.enrolled_by_name}
-                                        </p>
-                                        <p className="text-xs text-gray-400">
-                                            {new Date(enrollment.created_at).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Care Team Tab */}
-            {activeTab === 'care-team' && (
-                <div className="card">
-                    <div className="p-5 border-b">
-                        <h3 className="font-semibold text-gray-900">Care Team Members</h3>
-                    </div>
-                    <div className="divide-y">
-                        {patient.care_team?.map((member) => (
-                            <div key={member.id} className="p-4 flex justify-between items-center">
-                                <div>
-                                    <p className="font-medium">{member.first_name} {member.last_name}</p>
-                                    <p className="text-sm text-gray-500">
-                                        Role: {member.role_name || member.role} • {member.designation}
-                                    </p>
-                                </div>
-                                {member.is_primary && (
-                                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Primary Contact</span>
                                 )}
                             </div>
-                        ))}
-                        {(!patient.care_team || patient.care_team.length === 0) && (
-                            <p className="text-gray-500 text-center py-8">No care team assigned</p>
-                        )}
+                        </div>
+
+                        {/* Time Tracking Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                                <h2 className="text-sm font-semibold text-gray-800 flex items-center">
+                                    <Timer className="w-4 h-4 mr-2 text-gray-400" />
+                                    Time Tracking
+                                </h2>
+                            </div>
+                            <div className="p-5">
+                                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                                    <div className="text-center">
+                                        <p className="text-xs text-gray-500 uppercase mb-1">Current Session</p>
+                                        <p className="text-3xl font-mono font-bold text-gray-800">{formatElapsedTime(elapsedTime)}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    {activeTimer ? (
+                                        <button
+                                            onClick={() => stopTimerMutation.mutate()}
+                                            className="flex-1 px-4 py-2 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
+                                            style={{backgroundColor: '#1E2A3A'}}
+                                        >
+                                            <StopCircle className="w-4 h-4 mr-2" />
+                                            Stop Timer
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => startTimerMutation.mutate()}
+                                            className="flex-1 px-4 py-2 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
+                                            style={{backgroundColor: '#1E2A3A'}}
+                                        >
+                                            <Play className="w-4 h-4 mr-2" />
+                                            Start Timer
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setShowTimeModal(true)}
+                                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                                    >
+                                        Add Manual Time
+                                    </button>
+                                </div>
+                                <div className="mt-4 pt-3 border-t border-gray-100">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">Total Time This Month</span>
+                                        <span className="font-semibold text-gray-800">{Math.floor(totalMinutes / 60)}h {totalMinutes % 60}m</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column - Problems & Actions */}
+                    <div className="col-span-12 lg:col-span-7 space-y-6">
+                        {/* Problem List Card */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex justify-between items-center">
+                                <h2 className="text-sm font-semibold text-gray-800 flex items-center">
+                                    <Heart className="w-4 h-4 mr-2 text-gray-400" />
+                                    Chronic Conditions (Problem List)
+                                </h2>
+                                <button
+                                    onClick={() => setShowProblemModal(true)}
+                                    className="px-3 py-1.5 text-white rounded-lg text-xs font-medium transition-colors flex items-center"
+                                    style={{backgroundColor: '#1E2A3A'}}
+                                >
+                                    <Plus className="w-3.5 h-3.5 mr-1" />
+                                    Add Condition
+                                </button>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                                {patient.problems?.filter(p => p.clinical_status === 'active').map((problem) => (
+                                    <div key={problem.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center mb-1">
+                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-mono mr-2">
+                                                        {problem.icd_code}
+                                                    </span>
+                                                    <span className="text-sm font-medium text-gray-800">{problem.icd_description}</span>
+                                                </div>
+                                                <div className="flex items-center text-xs text-gray-500 mt-2">
+                                                    <Calendar className="w-3 h-3 mr-1" />
+                                                    Onset: {new Date(problem.onset_date).toLocaleDateString()}
+                                                </div>
+                                            </div>
+                                            <button className="p-1 hover:bg-gray-200 rounded transition-colors">
+                                                <MoreVertical className="w-4 h-4 text-gray-400" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(!patient.problems || patient.problems.filter(p => p.clinical_status === 'active').length === 0) && (
+                                    <div className="p-8 text-center">
+                                        <Heart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                        <p className="text-gray-500">No chronic conditions recorded</p>
+                                        <button
+                                            onClick={() => setShowProblemModal(true)}
+                                            className="mt-3 text-gray-600 text-sm hover:text-gray-800"
+                                        >
+                                            Add a condition
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Quick Actions Grid */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                                <h2 className="text-sm font-semibold text-gray-800 flex items-center">
+                                    <Layout className="w-4 h-4 mr-2 text-gray-400" />
+                                    Quick Actions
+                                </h2>
+                            </div>
+                            <div className="p-5">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {[
+                                        { label: 'Progress Note', icon: FileText, color: 'blue' },
+                                        { label: 'Care Plan', icon: ClipboardList, color: 'green' },
+                                        { label: 'Send Message', icon: MessageCircle, color: 'indigo' },
+                                        { label: 'View History', icon: History, color: 'purple' },
+                                        { label: 'Export Data', icon: Download, color: 'gray' },
+                                        { label: 'Care Team', icon: Users, color: 'orange' },
+                                    ].map((action) => (
+                                        <button
+                                            key={action.label}
+                                            className="p-3 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all text-left group"
+                                        >
+                                            <action.icon className="w-5 h-5 text-gray-400 mb-2 group-hover:scale-105 transition-transform" />
+                                            <p className="text-sm font-medium text-gray-700">{action.label}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Activity */}
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-5 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                                <h2 className="text-sm font-semibold text-gray-800 flex items-center">
+                                    <History className="w-4 h-4 mr-2 text-gray-500" />
+                                    Recent Activity
+                                </h2>
+                            </div>
+                            <div className="p-5">
+                                {timeLogs?.recent?.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {timeLogs.recent.slice(0, 5).map((log, idx) => (
+                                            <div key={idx} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                                <div className="flex items-center">
+                                                    <Clock className="w-4 h-4 text-gray-400 mr-3" />
+                                                    <div>
+                                                        <p className="text-sm text-gray-800">{log.description || 'CCM Time Entry'}</p>
+                                                        <p className="text-xs text-gray-500">{new Date(log.created_at).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-sm font-medium text-gray-600">{log.minutes} min</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500 text-center py-4">No recent activity</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            )}
+            </div>
 
             {/* Modals */}
             {showTimeModal && (
@@ -512,7 +490,7 @@ export default function PatientHub() {
                     onClose={() => setShowProblemModal(false)}
                     onSuccess={() => {
                         refetch();
-                        toast.success('Problem added successfully');
+                        toast.success('Condition added successfully');
                     }}
                 />
             )}

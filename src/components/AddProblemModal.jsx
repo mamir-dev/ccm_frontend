@@ -15,24 +15,17 @@ export default function AddProblemModal({ patientId, onClose, onSuccess }) {
     });
 
     const searchIcdCodes = async () => {
-        if (searchTerm.length < 2) return;
+        if (searchTerm.length < 2) {
+            setSearchResults([]);
+            return;
+        }
 
         try {
-            // This would call your ICD search endpoint
-            // For now, using mock data
-            const mockResults = [
-                { code: 'E11.9', description: 'Type 2 diabetes mellitus without complications' },
-                { code: 'I10', description: 'Essential (primary) hypertension' },
-                { code: 'J44.9', description: 'Chronic obstructive pulmonary disease, unspecified' },
-                { code: 'I25.10', description: 'Atherosclerotic heart disease' },
-                { code: 'N18.9', description: 'Chronic kidney disease, unspecified' }
-            ].filter(r =>
-                r.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                r.description.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setSearchResults(mockResults);
+            const response = await api.get(`/config/icd-search?q=${searchTerm}`);
+            setSearchResults(response.data);
         } catch (error) {
             console.error('Search error:', error);
+            toast.error('Failed to search ICD codes');
         }
     };
 
@@ -53,8 +46,8 @@ export default function AddProblemModal({ patientId, onClose, onSuccess }) {
         try {
             await api.post('/patients/problems', {
                 patientId,
-                icdCode: selectedIcd.code,
-                icdDescription: selectedIcd.description,
+                icdCode: selectedIcd.icd_code,
+                icdDescription: selectedIcd.icd_description,
                 onsetDate: formData.onsetDate,
                 clinicalStatus: formData.clinicalStatus,
                 notes: formData.notes
@@ -96,13 +89,14 @@ export default function AddProblemModal({ patientId, onClose, onSuccess }) {
                             <div className="mt-2 border rounded-lg max-h-48 overflow-y-auto">
                                 {searchResults.map((result) => (
                                     <button
-                                        key={result.code}
+                                        key={result.icd_code}
                                         onClick={() => setSelectedIcd(result)}
-                                        className={`w-full text-left p-2 hover:bg-gray-50 border-b last:border-b-0 ${selectedIcd?.code === result.code ? 'bg-primary-50' : ''
+                                        className={`w-full text-left p-2 hover:bg-gray-50 border-b last:border-b-0 ${selectedIcd?.icd_code === result.icd_code ? 'bg-primary-50' : ''
                                             }`}
                                     >
-                                        <p className="font-medium text-sm">{result.code}</p>
-                                        <p className="text-xs text-gray-500">{result.description}</p>
+                                        <p className="font-medium text-sm">{result.icd_code}</p>
+                                        <p className="text-sm text-gray-800">{result.icd_description}</p>
+                                        <p className="text-[10px] text-gray-400 italic">{result.group_name}</p>
                                     </button>
                                 ))}
                             </div>
@@ -111,9 +105,9 @@ export default function AddProblemModal({ patientId, onClose, onSuccess }) {
 
                     {/* Selected ICD */}
                     {selectedIcd && (
-                        <div className="bg-green-50 p-3 rounded-lg">
-                            <p className="text-sm font-medium text-green-800">Selected:</p>
-                            <p className="text-sm">{selectedIcd.code} - {selectedIcd.description}</p>
+                        <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                            <p className="text-xs font-bold text-green-700 uppercase mb-1">Selected Condition:</p>
+                            <p className="text-sm font-semibold text-gray-900">{selectedIcd.icd_code} - {selectedIcd.icd_description}</p>
                         </div>
                     )}
 
